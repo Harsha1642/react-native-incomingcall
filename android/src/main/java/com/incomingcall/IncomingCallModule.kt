@@ -3,10 +3,7 @@ package com.incomingcall
 import android.content.Intent
 import android.os.Build
 import androidx.annotation.RequiresApi
-import com.facebook.react.bridge.ReactApplicationContext
-import com.facebook.react.bridge.ReactContextBaseJavaModule
-import com.facebook.react.bridge.ReactMethod
-import com.facebook.react.bridge.WritableMap
+import com.facebook.react.bridge.*
 import com.facebook.react.modules.core.DeviceEventManagerModule.RCTDeviceEventEmitter
 
 
@@ -14,34 +11,31 @@ class IncomingCallModule(reactContext: ReactApplicationContext) :
   ReactContextBaseJavaModule(reactContext) {
 
   override fun getName(): String {
-    return NAME
+    return Constants.INCOMING_CALL
   }
 
   @RequiresApi(Build.VERSION_CODES.O)
   @ReactMethod
-  fun onDisplayIncomingCall() {
+  fun showIncomingCall(options: ReadableMap?) {
     reactApplicationContext.stopService(
       Intent(
         reactApplicationContext,
         CallService::class.java
       )
     )
-    reactApplicationContext.startForegroundService(
-      Intent(
-        reactApplicationContext,
-        CallService::class.java
-      )
-    )
+    val intent = Intent(reactApplicationContext, CallService::class.java)
+    intent.putExtra("channelName", options?.getString("channelName"))
+    intent.putExtra("channelId", options?.getString("channelId"))
+    intent.putExtra("timeout", options?.getString("timeout"))
+    intent.putExtra("component", options?.getString("component"))
+    intent.putExtra("callerName", options?.getString("callerName"))
+    reactApplicationContext.startForegroundService(intent)
   }
 
   @ReactMethod
   fun sendEventToJs(eventName: String, params: WritableMap?) {
     reactApplicationContext?.getJSModule(RCTDeviceEventEmitter::class.java)
       ?.emit(eventName, params)
-  }
-
-  companion object {
-    val NAME = "IncomingCall"
   }
 
 }
