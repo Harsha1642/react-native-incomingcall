@@ -25,9 +25,19 @@ import kotlinx.android.synthetic.main.call_fullscreen.*
 
 class CallingActivity : ReactActivity() {
 
-  override fun onCreate(savedInstanceState: Bundle?) {
+  override fun onStart() {
+    super.onStart()
     active = true
+  }
+
+  override fun onDestroy() {
+    active = false
+    super.onDestroy()
+  }
+
+  override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
+    val bundle = intent.extras
 
     if (allPermissionsGranted()) {
       startCamera()
@@ -59,12 +69,17 @@ class CallingActivity : ReactActivity() {
       View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
 
     val mIntentFilter = IntentFilter();
-    mIntentFilter.addAction(Constants.ACTION_END_CALL);
+    mIntentFilter.addAction(Constants.ACTION_END_INCOMING_CALL);
     registerReceiver(mBroadcastReceiver, mIntentFilter)
 
     acceptButton.setOnClickListener {
       stopService(Intent(this, CallService::class.java))
-      startActivity(Intent(this, AnswerCallActivity::class.java))
+      val answerIntent = Intent(this, AnswerCallActivity::class.java)
+      val component = bundle?.getString("component")
+      val accessToken = bundle?.getString("accessToken")
+      answerIntent.putExtra("component", component)
+      answerIntent.putExtra("accessToken", accessToken)
+      startActivity(answerIntent)
       finishAndRemoveTask()
     }
 
@@ -72,11 +87,6 @@ class CallingActivity : ReactActivity() {
       stopService(Intent(this, CallService::class.java))
       finishAndRemoveTask()
     }
-  }
-
-  override fun onDestroy() {
-    active = false
-    super.onDestroy()
   }
 
   override fun onRequestPermissionsResult(
@@ -127,7 +137,7 @@ class CallingActivity : ReactActivity() {
 
   private val mBroadcastReceiver: BroadcastReceiver = object : BroadcastReceiver() {
     override fun onReceive(context: Context?, intent: Intent) {
-      if (intent.action == Constants.ACTION_END_CALL) {
+      if (intent.action == Constants.ACTION_END_INCOMING_CALL) {
         finishAndRemoveTask()
       }
     }

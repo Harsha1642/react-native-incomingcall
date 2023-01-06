@@ -3,8 +3,10 @@ package com.incomingcall
 import android.app.KeyguardManager
 import android.app.NotificationManager
 import android.app.PictureInPictureParams
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.res.Configuration
 import android.os.Build
 import android.os.Bundle
@@ -19,6 +21,16 @@ import com.facebook.react.bridge.WritableMap
 
 
 class AnswerCallActivity : ReactActivity() {
+
+  override fun onStart() {
+    super.onStart()
+    active = true
+  }
+
+  override fun onDestroy() {
+    super.onDestroy()
+    active = false
+  }
 
   override fun onCreate(savedInstanceState: Bundle?) {
 
@@ -43,8 +55,12 @@ class AnswerCallActivity : ReactActivity() {
 
 
     if (CallingActivity.active) {
-      sendBroadcast(Intent(Constants.ACTION_END_CALL))
+      sendBroadcast(Intent(Constants.ACTION_END_INCOMING_CALL))
     }
+
+    val mIntentFilter = IntentFilter();
+    mIntentFilter.addAction(Constants.ACTION_END_ACTIVE_CALL);
+    registerReceiver(mBroadcastReceiver, mIntentFilter)
 
     stopService(Intent(this, CallService::class.java))
     val notificationManager =
@@ -63,6 +79,14 @@ class AnswerCallActivity : ReactActivity() {
       .commit()
   }
 
+  private val mBroadcastReceiver: BroadcastReceiver = object : BroadcastReceiver() {
+    override fun onReceive(context: Context?, intent: Intent) {
+      if (intent.action == Constants.ACTION_END_ACTIVE_CALL) {
+        finishAndRemoveTask()
+      }
+    }
+  }
+
   override fun onBackPressed() {
     // super.onBackPressed()
     enterPipMode(380, 214)
@@ -71,6 +95,13 @@ class AnswerCallActivity : ReactActivity() {
   override fun onUserLeaveHint() {
     enterPipMode(380, 214)
     super.onUserLeaveHint()
+  }
+
+  override fun onWindowFocusChanged(hasFocus: Boolean) {
+    if(!hasFocus){
+      enterPipMode(380, 214)
+    }
+    super.onWindowFocusChanged(hasFocus)
   }
 
   override fun onPictureInPictureModeChanged(
@@ -113,6 +144,7 @@ class AnswerCallActivity : ReactActivity() {
 
   companion object {
     var onPipExit = false
+    var active = false
     private const val TAG_KEYGUARD = "Incoming:unLock"
   }
 }

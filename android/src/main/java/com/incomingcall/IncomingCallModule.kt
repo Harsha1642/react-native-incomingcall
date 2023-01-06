@@ -29,7 +29,25 @@ class IncomingCallModule(reactContext: ReactApplicationContext) :
     intent.putExtra("timeout", options?.getString("timeout"))
     intent.putExtra("component", options?.getString("component"))
     intent.putExtra("callerName", options?.getString("callerName"))
+    intent.putExtra("accessToken", options?.getString("accessToken"))
     reactApplicationContext.startForegroundService(intent)
+  }
+
+  @ReactMethod
+  fun endCall() {
+      reactApplicationContext.stopService(
+          Intent(
+              reactApplicationContext,
+              CallService::class.java
+          )
+      )
+
+    if(CallingActivity.active){
+      reactApplicationContext.sendBroadcast(Intent(Constants.ACTION_END_INCOMING_CALL))
+    }
+    if(AnswerCallActivity.active){
+      reactApplicationContext.sendBroadcast(Intent(Constants.ACTION_END_ACTIVE_CALL))
+    }
   }
 
   @ReactMethod

@@ -33,7 +33,7 @@ class CallService : Service() {
   override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
 
     val bundle = intent?.extras
-    val timeout = bundle?.getString("timeout")?.toLong() ?: Constants.TIME_OUT.toLong()
+    val timeout = bundle?.getString("timeout")?.toLong() ?: Constants.TIME_OUT
 
     val notification: Notification = buildNotification(intent)
     startForeground(Constants.FOREGROUND_SERVICE_ID, notification)
@@ -50,13 +50,19 @@ class CallService : Service() {
     val channelName = bundle?.getString("channelName") ?: Constants.INCOMING_CALL
     val channelId = bundle?.getString("channelId") ?: Constants.INCOMING_CALL
     val component = bundle?.getString("component")
+    val accessToken = bundle?.getString("accessToken")
 
     val customView = RemoteViews(packageName, R.layout.call_notification)
 
     val notificationIntent = Intent(this, CallingActivity::class.java)
     val hungupIntent = Intent(this, HungUpBroadcast::class.java)
     var answerIntent = Intent(this, AnswerCallActivity::class.java)
+
+    notificationIntent.putExtra("component", component)
+    notificationIntent.putExtra("accessToken", accessToken)
+
     answerIntent.putExtra("component", component)
+    answerIntent.putExtra("accessToken", accessToken)
 
     val flag = PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
     val pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, flag)
@@ -104,7 +110,7 @@ class CallService : Service() {
       run {
         stopSelf()
         if (CallingActivity.active) {
-          sendBroadcast(Intent(Constants.ACTION_END_CALL))
+          sendBroadcast(Intent(Constants.ACTION_END_INCOMING_CALL))
         }
       }
     }
