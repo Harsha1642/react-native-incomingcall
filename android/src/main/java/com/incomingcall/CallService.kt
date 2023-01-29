@@ -33,7 +33,7 @@ class CallService : Service() {
   override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
 
     val bundle = intent?.extras
-    val timeout = bundle?.getString("timeout")?.toLong() ?: Constants.TIME_OUT
+    val timeout = bundle?.getLong("timeout") ?: Constants.TIME_OUT
 
     val notification: Notification = buildNotification(intent)
     startForeground(Constants.FOREGROUND_SERVICE_ID, notification)
